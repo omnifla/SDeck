@@ -1,0 +1,50 @@
+{
+  "name": "default",
+  "keys": {
+    "0": {
+      "pluginId": "obs",
+      "actionId": "toggleRecording",
+      "label": "REC",
+      "color": "#F44336"
+    },
+    "1": {
+      "pluginId": "obs",
+      "actionId": "toggleStreaming",
+      "label": "LIVE",
+      "color": "#E91E63"
+    },
+    "2": {
+      "pluginId": "obs",
+      "actionId": "toggleVirtualCam",
+      "label": "Cam",
+      "color": "#2196F3"
+    },
+    "3": {
+      "pluginId": "obs",
+      "actionId": "toggleMicMute",
+      "label": "Mic",
+      "color": "#4CAF50",
+      "options": {
+        "inputName": "Mic/Aux"
+      }
+    },
+    "4": {
+      "pluginId": "obs",
+      "actionId": "toggleDesktopMute",
+      "label": "Desk",
+      "color": "#4CAF50",
+      "options": {
+        "inputName": "Desktop Audio"
+      }
+    },
+    "5": {
+      "pluginId": "obs",
+      "actionId": "switchScene",
+      "label": "Scene",
+      "color": "#9C27B0",
+      "options": {
+        "sceneName": "Main Scene"
+      }
+    }
+  }
+}

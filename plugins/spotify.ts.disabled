@@ -1,0 +1,95 @@
+import type { DeckPlugin, EventBus } from "../src/types";
+
+// ── Spotify plugin ─────────────────────────────────────────────────────────────
+// Uses Spotify Web API. Set SPOTIFY_TOKEN env var (or implement OAuth flow).
+// The plugin subscribes to Bun's setInterval to poll playback state every 5s
+// and pushes display updates so keys always reflect current track state.
+
+const BASE = "https://api.spotify.com/v1/me/player";
+
+async function spotifyFetch(path: string, method = "GET", body?: object) {
+  const token = process.env.SPOTIFY_TOKEN;
+  if (!token) throw new Error("SPOTIFY_TOKEN not set");
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 204) return null;
+  if (!res.ok) throw new Error(`Spotify ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+const plugin: DeckPlugin = {
+  name: "spotify",
+
+  actions: {
+    async playPause({ pushDisplay }) {
+      const state = (await spotifyFetch("")) as { is_playing: boolean } | null;
+      const isPlaying = state?.is_playing ?? false;
+      await spotifyFetch(isPlaying ? "/pause" : "/play", "PUT");
+      pushDisplay({
+        keyIndex: 0, // will be overridden by profile binding
+        label: isPlaying ? "Play" : "Pause",
+        color: isPlaying ? "#1DB954" : "#888888",
+      });
+    },
+
+    async nextTrack({ pushDisplay }) {
+      await spotifyFetch("/next", "POST");
+      pushDisplay({ keyIndex: 0, label: "Next", color: "#1DB954" });
+    },
+
+    async prevTrack({ pushDisplay }) {
+      await spotifyFetch("/previous", "POST");
+      pushDisplay({ keyIndex: 0, label: "Prev", color: "#1DB954" });
+    },
+
+    async volumeUp() {
+      const state = (await spotifyFetch("")) as {
+        device: { volume_percent: number };
+      } | null;
+      const vol = Math.min(100, (state?.device.volume_percent ?? 50) + 10);
+      await spotifyFetch(`/volume?volume_percent=${vol}`, "PUT");
+    },
+
+    async volumeDown() {
+      const state = (await spotifyFetch("")) as {
+        device: { volume_percent: number };
+      } | null;
+      const vol = Math.max(0, (state?.device.volume_percent ?? 50) - 10);
+      await spotifyFetch(`/volume?volume_percent=${vol}`, "PUT");
+    },
+  },
+
+  subscribe(bus: EventBus) {
+    // Poll every 5s and push play/pause state to the key display
+    pollInterval = setInterval(async () => {
+      try {
+        const state = (await spotifyFetch("")) as {
+          is_playing: boolean;
+          item?: { name: string };
+        } | null;
+        if (!state) return;
+        bus.emit("displayUpdate", {
+          keyIndex: 0,
+          label: state.is_playing ? "⏸" : "▶",
+          color: state.is_playing ? "#1DB954" : "#555555",
+        });
+      } catch {
+        // Token may have expired — fail silently until next poll
+      }
+    }, 5000);
+  },
+
+  destroy() {
+    if (pollInterval) clearInterval(pollInterval);
+  },
+};
+
+export default plugin;
