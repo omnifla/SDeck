@@ -1,0 +1,30 @@
+{
+  "serial": {
+    "port": "COM3",
+    "mock": false
+  },
+  "server": {
+    "wsPort": 4242
+  },
+  "plugins": {
+    "enabled": {
+      "home-assistant": true,
+      "obs": true,
+      "shell": true,
+      "spotify": false
+    }
+  },
+  "integrations": {
+    "homeAssistant": {
+      "url": "http://homeassistant.local:8123",
+      "token": ""
+    },
+    "obs": {
+      "url": "ws://localhost:4455",
+      "password": ""
+    },
+    "spotify": {
+      "token": ""
+    }
+  }
+}
